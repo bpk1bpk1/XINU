@@ -1,0 +1,50 @@
+Assignment 1 - Part 3 
+
+1. Orphan Process - An orphan process is a child process that doesn't have a parent process as the parent process has finisht execution and has been terminated. 
+                    Hence, the process is orphaned as it has no parent. 
+Example:
+#include<stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+int main()
+{     
+    int pid = fork();
+ 
+    if (pid > 0)
+        printf("This is running the parent process since the process id is greater);
+    else if (pid == 0)
+    {
+        sleep(75);
+        printf("This is now running the orphaned child process");
+    }
+ 
+    return 0;
+}
+          
+
+
+Zombie Process - A child process that has finisht its execution but its parent process hasn't yet called the wait() function,
+                    that is the process still has an entry in the process table is called a zombie process.
+Example:
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+int main()
+{
+    processid_parent processid_child = fork();
+ 
+    if (child_pid > 0)
+        sleep(75);
+
+    else       
+        exit(0);
+ 
+    return 0;
+}
+This creates a zombie process as the child is existent when the parent is sleeping.
+
+
+2. The function exec() runs a file even though there is a process that exists and replace the old file with the new executable file. 
+   The process identifier is going to remain the same but the data and stack of the process is going to be replaced by the new file. 
+
+ 

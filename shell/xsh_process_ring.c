@@ -7,7 +7,7 @@
 #include <process_ring.h>
 
 // function prototypes
-void ring_process (int);
+void processring(int);
 void process_arg_pair(char* key, char* val);
 
 volatile int count = 0;
@@ -73,7 +73,7 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   printmessage[0] = count = numberofprocesses * rounds;
   for (i = 0; i < numberofprocesses; i++)
     {
-      resume (create (ring_process, 1024, 20, "i", 1, i));
+      resume (create (processring, 1024, 20, "i", 1, i));
     }
 
   return 0;

@@ -4,7 +4,7 @@
 
 volatile int printmessage[numberofprocesses];
 
-void ring_process (int ring_element)
+void processring (int ring_element)
 {
   int round = 0;
   while (1)
@@ -14,14 +14,13 @@ void ring_process (int ring_element)
       if (count % numberofprocesses ==
 	  (numberofprocesses - ring_element) % numberofprocesses)
 	{
-	  printf ("Ring Element %d : Round %d : Value %d \n ", ring_element,
-		   round++,printmessage [ring_element]);
+	  printf ("Ring Element %d : Round %d : Value %d \n ", ring_element,round++,printmessage [ring_element]);
 	  printmessage[(ring_element + 1) % numberofprocesses] = --count;
 
 	  if (count == 0)
 	    {
 	      count--;
-	      printf ("Zero!");
+	      printf ("Zero!!");
 	      return;
 	    }
 	}

@@ -10,7 +10,7 @@
 void processring(int);
 void process_arg_pair(char* key, char* val);
 
-volatile int count = 0;
+volatile int variable2 = 0;
 
 // maximum accepted values for number of process/rounds
 int MAXPROC = 30;
@@ -70,7 +70,7 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   printf("Number of Processes: %d\nNumber of Rounds: %d\nMode: %d\n\n", processes, rounds, mode);
 
   int i;
-  printmessage[0] = count = numberofprocesses * rounds;
+  variable1[0] = variable2 = numberofprocesses * rounds;
   for (i = 0; i < numberofprocesses; i++)
     {
       resume (create (processring, 1024, 20, "i", 1, i));

@@ -2,7 +2,7 @@
 #include <kernel.h>
 #include <process_ring.h>
 
-volatile int printmessage[numberofprocesses];
+volatile int variable1[numberofprocesses];
 
 void processring (int ring_element)
 {
@@ -11,15 +11,14 @@ void processring (int ring_element)
     {
 
       //Runs in order
-      if (count % numberofprocesses ==
-	  (numberofprocesses - ring_element) % numberofprocesses)
+      if (variable2 % numberofprocesses == (numberofprocesses - ring_element) % numberofprocesses)
 	{
-	  printf ("Ring Element %d : Round %d : Value %d \n ", ring_element,round++,printmessage [ring_element]);
-	  printmessage[(ring_element + 1) % numberofprocesses] = --count;
+	  printf ("Ring Element %d : Round %d : Value %d \n ", ring_element,round++,variable1[ring_element]);
+	  variable1[(ring_element + 1) % numberofprocesses] = --variable2;
 
-	  if (count == 0)
+	  if (variable2 == 0)
 	    {
-	      count--;
+	      variable2--;
 	      printf ("Zero!!");
 	      return;
 	    }

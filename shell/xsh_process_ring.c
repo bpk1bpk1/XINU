@@ -34,6 +34,9 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   // process 3rd pair of command line arguments if given
   if (argc == 7) { parse_argv_pair(argv[5], argv[6]); }
 
+  // check for overflow issues
+  if (processes > INT_MAX / rounds) { printErr("Error: numbers too big"); }
+
   printf("Number of Processes: %d\nNumber of Rounds: %d\n", processes, rounds);
 
   // initialize our volatile variables
@@ -84,7 +87,7 @@ void parse_argv_pair(char* key, char* val)
   else if (strncmp(key, "-r", 3) == 0 || strncmp(key, "--rounds", 9) == 0 || strncmp(key, "--round", 8) == 0) 
     {
       rounds = atoi(val);
-      if (rounds < 1 || rounds > MAXROUND) { printErr("Error: invalid number of rounds"); }
+      if (rounds < 1) { printErr("Error: invalid number of rounds"); }
     } 
 
   // try to extract the version

@@ -18,6 +18,6 @@ void printErr(char* msg);
 
 // maximum accepted values for number of process/rounds
 #define MAXPROC 60
-#define MAXROUND 2147483647
+#define INT_MAX 2147483647
 
 #endif

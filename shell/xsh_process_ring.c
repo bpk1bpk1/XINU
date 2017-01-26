@@ -4,19 +4,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <process_ring.h>
+
+// declare variables to store command line data
+int rounds;
+int processes;
+enum versions { WORK, HANG, LOOP, CHAOS};
+int version;
+
+// this will be accessed/modified by multiple process
+volatile int count;
 
 // function prototypes
 void processring (int pi, sid32 proctrl, sid32 isdone);
+void chaosring (int pi, sid32 isdone);
 void parse_argv_pair(char* key, char* val);
+void printErr(char* msg);
 
 // maximum accepted values for number of process/rounds
-int MAXPROC = 30;
+int MAXPROC = 60;
 int MAXROUND = 2147483647;
-  
-// help text describing how the program should be used
-// printed when the user calls this program incorrectly
-char* usage = "\nUsage: process_ring [OPTIONS]\n\nOPTIONS\n    -p, --processes NUM\n        sets the number of processes to NUM. NUM must be an integer between 0 and 60 (default: 4)\n    -r, --rounds NUM\n        sets the number of rounds to NUM. NUM must be an integer between 0 and 60 (default: 5)\n    -v, --version STRING\n        where STRING is one of:\n            - 'work' (works correctly, default behavior)\n            - 'hang' (does nothing)\n            - 'loop' (goes into an infinite loop)\n            - 'chaos' (prints numbers out of order)\n\n";
 
 /* -----------------------------------------------------------------------
  * xsh_process_ring - print a countdown using several processes
@@ -30,27 +36,14 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   version = WORK;
 
   // print help message
-  if (strncmp(argv[1], "--help", 7) == 0 || strncmp(argv[1], "-h", 3) == 0)
-    {
-      printf("%s", usage);
-      return 0;
-    }
+  if (strncmp(argv[1], "--help", 7) == 0 || strncmp(argv[1], "-h", 3) == 0)  { printErr("Help"); }
   
   // we should never be processing more than 6 args plus arg[0]
-  if (argc > 7) 
-    {
-      printf("\nError: too many arguments\n%s", usage);
-      return 1;
-    }
+  if (argc > 7) { printErr("Error: too many arguments"); }
   
   // every --specifier should be followed by exactly one other arguments 
-  // so we should always have an even number of arguments..
   // including arg[0], that means argc should always be odd
-  if (argc == 2 || argc == 4 || argc == 6) 
-    {
-      printf("\nError: unpaired arguments\n%s", usage);
-      return 1;
-    }
+  if (argc == 2 || argc == 4 || argc == 6) { printErr("Error: unpaired arguments"); }
   
   // process 1st pair of command line arguments if given
   if (argc >= 3) { parse_argv_pair(argv[1], argv[2]); }
@@ -61,25 +54,28 @@ shellcmd xsh_process_ring(int argc, char *argv[])
 
   printf("Number of Processes: %d\nNumber of Rounds: %d\n", processes, rounds);
 
-  // create our semaphores
-  sid32 proctrl = semcreate(0);
-  sid32 isdone = semcreate(processes);
-
   // initialize our volatile variables
   count = processes * rounds;
-  round = 0;
+
+  // create our semaphores
+  sid32 proctrl = semcreate(0);
+  sid32 isdone = semcreate(0);
 
   int i;
-  for (i = 0; i < processes; i++)
-    {
+  for (i = 0; i < processes; i++) {
+    if (version == CHAOS) {
+      resume(create(chaosring, 1024, 20, "process_ring", 2, i, isdone));
+    } else {
       resume(create(processring, 1024, 20, "process_ring", 3, i, proctrl, isdone));
     }
-
-  if (version != HANG) {
-    signal(proctrl);
   }
 
+  // get things started if we aren't hanging
+  if (version != HANG) { signal(proctrl); }
+
+  // wait for above processes to finish so the prompt doesn't print too early
   wait(isdone);
+  sleep(0.5);
   return 0;
 }
 
@@ -87,86 +83,101 @@ shellcmd xsh_process_ring(int argc, char *argv[])
 // pi = process index
 void processring (int pi, sid32 proctrl, sid32 isdone)
 {
-  wait(isdone);
   while (1)
     {
-
-      kprintf('wait %d', pi);
       wait(proctrl);
-
+      // exit and signal if we're finished
       if (count < 0 && version != LOOP) 
-	{ 
+	{
 	  signal(isdone);
 	  exit(0); 
 	}
-
-      else if (count == 0 && version != LOOP) 
-	{ 
-	  printf("ZERO!\n"); 
-	  count--; 
-	  signal(isdone);
-	  exit(0);
-	}
-
+      // otherwise print and decrement the count
       else 
 	{
-	  printf ("Ring Element %d : Round %d : Value %d\n", pi, round, count--);
-	  if (count % processes == 0) { round++; }
+	  if (count == 0) { 
+	    printf("ZERO!\n"); 
+	  } else {
+	    printf("Ring Element %d : Round %d : Value %d\n", pi, rounds-1-((count-1)/processes), count); 
+	  }
+	  count--;
 	}
-
-      kprintf('sign %d', pi);
+      // next process in line can do their thing
       signal(proctrl);
     }
 }
 
 
+// pi = process index
+void chaosring (int pi, sid32 isdone)
+{
+  int private_count = (processes * rounds) - pi;
+  intmask mask; // for re-enabling interrupts
+  while (1)
+    {
+
+      // I don't want to be interrupted in the middle of an iteration
+      mask = disable();
+
+      // exit and signal if we're finished ()
+      if ((private_count < 0 || count < 0) && version != LOOP) 
+	{
+	  sleep(0.2);
+	  signal(isdone);
+	  exit(0); 
+	}
+      // otherwise print and decrement our private count
+      else 
+	{
+	  if (private_count == 0) { 
+	    printf("ZERO!\n"); 
+	  } else if (version == CHAOS) { 
+	    printf("Ring Element %d : Round %d : Value %d\n", pi, rounds-1-((private_count-1)/processes), private_count); 
+	  }
+	  private_count -= processes;
+	}
+
+      // re-enable interrupts
+      restore(mask); 
+      // sleep so that other processes can catch up to make things more chaotic >:)
+      sleep(0.1);
+      
+    }
+}
+
+
+void printErr(char* msg) {
+  // help text describing how the program should be used
+  // printed when the user calls this program incorrectly
+  char* usage = "\nUsage: process_ring [OPTIONS]\n\nOPTIONS\n    -p, --processes NUM\n        sets the number of processes to NUM. NUM must be an integer between 0 and 60 (default: 4)\n    -r, --rounds NUM\n        sets the number of rounds to NUM. NUM must be an integer between 0 and 60 (default: 5)\n    -v, --version STRING\n        where STRING is one of:\n            - 'work' (works correctly, default behavior)\n            - 'hang' (does nothing)\n            - 'loop' (goes into an infinite loop)\n            - 'chaos' (prints numbers out of order)\n    -h, --help\n        print this help message\n\n";
+  printf("\n%s\n%s", msg, usage);
+  exit(1);
+}
+
 void parse_argv_pair(char* key, char* val) 
 {
+  // try to extract the number of processes
   if (strncmp(key, "-p", 3) == 0 || strncmp(key, "--processes", 12) == 0 || strncmp(key, "--process", 10) == 0) 
     {
       processes = atoi(val);
-      if (processes < 1 || processes > MAXPROC)
-	{
-	  printf("\nError: invalid number of processes\n%s", usage);
-	  exit(1);
-	}
+      if (processes < 1 || processes > MAXPROC) { printErr("Error: invalid number of processes"); }
     } 
+
+  // try to extract the number of rounds
   else if (strncmp(key, "-r", 3) == 0 || strncmp(key, "--rounds", 9) == 0 || strncmp(key, "--round", 8) == 0) 
     {
       rounds = atoi(val);
-      if (rounds < 1 || rounds > MAXROUND)
-	{
-	  printf("\nError: invalid number of rounds\n%s", usage);
-	  exit(1);
-	}
+      if (rounds < 1 || rounds > MAXROUND) { printErr("Error: invalid number of rounds"); }
     } 
+
+  // try to extract the version
   else if (strncmp(key, "-v", 3) == 0 || strncmp(key, "--version", 10) == 0) 
     {
-      if (strncmp(val, "work", 5) == 0)
-	{
-	  version = WORK;
-	}
-      else if (strncmp(val, "hang", 5) == 0)
-	{
-	  version = HANG;
-	}
-      else if (strncmp(val, "loop", 5) == 0)
-	{
-	  version = LOOP;
-	}
-      else if (strncmp(val, "chaos", 6) == 0)
-	{
-	  version = CHAOS;
-	}
-      else
-	{
-	  printf("\nError: invalid version\n%s", usage);
-	  exit(1);
-	}
+      if (strncmp(val, "work", 5) == 0)	{ version = WORK; }
+      else if (strncmp(val, "hang", 5) == 0) { version = HANG; }
+      else if (strncmp(val, "loop", 5) == 0) { version = LOOP; }
+      else if (strncmp(val, "chaos", 6) == 0) { version = CHAOS; }
+      else { printErr("Error: invalid version"); }
     }
-  else
-    {
-      printf("\nError: invalid argument\n%s", usage);
-      exit(1);
-    }
+  else { printErr("Error: invalid argument"); }
 }

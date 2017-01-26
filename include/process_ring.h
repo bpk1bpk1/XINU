@@ -7,8 +7,17 @@ int processes;
 enum versions { WORK, HANG, LOOP, CHAOS};
 int version;
 
-// these will be accessed/modified by lots of process
+// this will be accessed/modified by multiple process
 volatile int count;
-volatile int round;
+
+// function prototypes
+void processring (int pi, sid32 proctrl, sid32 isdone);
+void chaosring (int pi, sid32 isdone);
+void parse_argv_pair(char* key, char* val);
+void printErr(char* msg);
+
+// maximum accepted values for number of process/rounds
+#define MAXPROC 60
+#define MAXROUND 2147483647
 
 #endif

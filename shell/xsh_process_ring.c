@@ -4,25 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// declare variables to store command line data
-int rounds;
-int processes;
-enum versions { WORK, HANG, LOOP, CHAOS};
-int version;
-
-// this will be accessed/modified by multiple process
-volatile int count;
-
-// function prototypes
-void processring (int pi, sid32 proctrl, sid32 isdone);
-void chaosring (int pi, sid32 isdone);
-void parse_argv_pair(char* key, char* val);
-void printErr(char* msg);
-
-// maximum accepted values for number of process/rounds
-int MAXPROC = 60;
-int MAXROUND = 2147483647;
+#include <process_ring.h>
 
 /* -----------------------------------------------------------------------
  * xsh_process_ring - print a countdown using several processes
@@ -80,72 +62,6 @@ shellcmd xsh_process_ring(int argc, char *argv[])
 }
 
 
-// pi = process index
-void processring (int pi, sid32 proctrl, sid32 isdone)
-{
-  while (1)
-    {
-      wait(proctrl);
-      // exit and signal if we're finished
-      if (count < 0 && version != LOOP) 
-	{
-	  signal(isdone);
-	  exit(0); 
-	}
-      // otherwise print and decrement the count
-      else 
-	{
-	  if (count == 0) { 
-	    printf("ZERO!\n"); 
-	  } else {
-	    printf("Ring Element %d : Round %d : Value %d\n", pi, rounds-1-((count-1)/processes), count); 
-	  }
-	  count--;
-	}
-      // next process in line can do their thing
-      signal(proctrl);
-    }
-}
-
-
-// pi = process index
-void chaosring (int pi, sid32 isdone)
-{
-  int private_count = (processes * rounds) - pi;
-  intmask mask; // for re-enabling interrupts
-  while (1)
-    {
-
-      // I don't want to be interrupted in the middle of an iteration
-      mask = disable();
-
-      // exit and signal if we're finished ()
-      if ((private_count < 0 || count < 0) && version != LOOP) 
-	{
-	  sleep(0.2);
-	  signal(isdone);
-	  exit(0); 
-	}
-      // otherwise print and decrement our private count
-      else 
-	{
-	  if (private_count == 0) { 
-	    printf("ZERO!\n"); 
-	  } else if (version == CHAOS) { 
-	    printf("Ring Element %d : Round %d : Value %d\n", pi, rounds-1-((private_count-1)/processes), private_count); 
-	  }
-	  private_count -= processes;
-	}
-
-      // re-enable interrupts
-      restore(mask); 
-      // sleep so that other processes can catch up to make things more chaotic >:)
-      sleep(0.1);
-      
-    }
-}
-
-
 void printErr(char* msg) {
   // help text describing how the program should be used
   // printed when the user calls this program incorrectly
@@ -153,6 +69,7 @@ void printErr(char* msg) {
   printf("\n%s\n%s", msg, usage);
   exit(1);
 }
+
 
 void parse_argv_pair(char* key, char* val) 
 {

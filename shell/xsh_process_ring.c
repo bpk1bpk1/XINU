@@ -7,7 +7,7 @@
 #include <process_ring.h>
 
 // function prototypes
-void processring(int);
+void processring (int pi, sid32 proctrl, sid32 isdone);
 void parse_argv_pair(char* key, char* val);
 
 // maximum accepted values for number of process/rounds
@@ -28,7 +28,6 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   processes = 4;
   rounds = 5;
   version = WORK;
-  count = processes * rounds;
 
   // print help message
   if (strncmp(argv[1], "--help", 7) == 0 || strncmp(argv[1], "-h", 3) == 0)
@@ -59,19 +58,65 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   if (argc >= 5) { parse_argv_pair(argv[3], argv[4]); }
   // process 3rd pair of command line arguments if given
   if (argc == 7) { parse_argv_pair(argv[5], argv[6]); }
-  
-  printf("Number of Processes: %d\nNumber of Rounds: %d\n\n", processes, rounds);
+
+  printf("Number of Processes: %d\nNumber of Rounds: %d\n", processes, rounds);
+
+  // create our semaphores
+  sid32 proctrl = semcreate(0);
+  sid32 isdone = semcreate(processes);
+
+  // initialize our volatile variables
+  count = processes * rounds;
+  round = 0;
 
   int i;
-  sid32 ctrler = semcreate(0);
   for (i = 0; i < processes; i++)
     {
-      resume(create(processring, 1024, 20, "process_ring", 2, i, ctrler));
+      resume(create(processring, 1024, 20, "process_ring", 3, i, proctrl, isdone));
     }
-  signal(ctrler);
 
+  if (version != HANG) {
+    signal(proctrl);
+  }
+
+  wait(isdone);
   return 0;
+}
 
+
+// pi = process index
+void processring (int pi, sid32 proctrl, sid32 isdone)
+{
+  wait(isdone);
+  while (1)
+    {
+
+      kprintf('wait %d', pi);
+      wait(proctrl);
+
+      if (count < 0 && version != LOOP) 
+	{ 
+	  signal(isdone);
+	  exit(0); 
+	}
+
+      else if (count == 0 && version != LOOP) 
+	{ 
+	  printf("ZERO!\n"); 
+	  count--; 
+	  signal(isdone);
+	  exit(0);
+	}
+
+      else 
+	{
+	  printf ("Ring Element %d : Round %d : Value %d\n", pi, round, count--);
+	  if (count % processes == 0) { round++; }
+	}
+
+      kprintf('sign %d', pi);
+      signal(proctrl);
+    }
 }
 
 

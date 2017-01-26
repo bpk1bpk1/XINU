@@ -1,4 +1,4 @@
-Assignment 2 - Robert Henderson and Burde Prerana Kamath
+# Assignment 2 - Robert Henderson and Burde Prerana Kamath
 
 This assignment gives an overview as to why processes need to synchronise with each other and what happens when they are asynchronous. It shows us how to implement Spinlock or the popular term - "Busy Waiting."
 
@@ -6,7 +6,7 @@ There are two global variables declared variable1 and variable2. These two varia
 The way each of these variables behave define the four situations processes can get caught in. Every process has an if statement to print the Ring element along with the round and the value. The condition for this is the remainder when variable2 is divided by the numberofprocesses.
 The remainder has to be equal to one of the process id's for the print statement to be executed during which all the other processes are going to be in the waiting state. 
 
-1 - Why does your program hang? What is the name of this behavior in an operating system? 
+## 1 - Why does your program hang? What is the name of this behavior in an operating system? 
 
 The name of this behaviour is called deadlock. 
 Deadlock is implemented in this program by replacing variable 2 with variable 1. When every loop begins, variable 2 and variable 1 of the process is the same. 
@@ -14,7 +14,7 @@ The next step in the program is to assign variable 2 to variable 1 of the proces
 The program hangs because in an asynchronous behaviour, variable 2 is decremented before a system call is made due to the printf statement. Hence, this variable2 assigns the same value to variable 1 and the entry into the if statement becomes void. 
 This applies to all the processes in the program and they keep checking whether the if condition is going to be true. The term for this is called Spinlock or "Busy Waiting" in popular terms. 
 
-2 - Why does your program go into an infinite loop? What is the name of this behavior in an operating system?
+## 2 - Why does your program go into an infinite loop? What is the name of this behavior in an operating system?
 
 The name of this behaviour is -----------------------------------------------------.
 
@@ -23,13 +23,13 @@ The value is decremented by the number of processes being run. After all the pro
 When the next process runs, it uses the same value in its variable 1 and variable 2 ends up getting decremented to the same value again. 
 As this keeps repeating, the variable 2 doesn't reach the value 0 and the processes never seem to exit the loop.
 
-3 - Why does your program print numbers out of order? What is the name of this behavior in an operating system?
+## 3 - Why does your program print numbers out of order? What is the name of this behavior in an operating system?
 
 The name of this behaviour is known as the Race condition popularly.
 The program prints numbers out of order because in the part which prints the processes in order, the process is able to assign a value to the variable 1 of the other process.
 In this particular instance, there are a certain number of processes running the same code. The scheduler is confused and is not able to assign a job to each of the processes and prints the order in a havoc manner. 
 
-4 - What property of Xinu allows the working version of your program to print values in the correct order?
+## 4 - What property of Xinu allows the working version of your program to print values in the correct order?
 
 The program allows us to print values in the correct order because the processes are synchronised and are in order.
 Eevery time a process enters an if loop, the process does not assign values to variable2 or variable1. 
@@ -37,6 +37,4 @@ Therefore, the other processes can't enter the if condition and are in the waiti
 The property of Xinu that helps synchronise order is First in First out. 
 
 Contribution of each team member --
- 
-
 

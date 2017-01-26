@@ -28,6 +28,7 @@ void processring (int pi, sid32 proctrl, sid32 isdone)
 	  count--;
 	}
       // next process in line can do their thing
+      sleep(0);
       signal(proctrl);
     }
 }

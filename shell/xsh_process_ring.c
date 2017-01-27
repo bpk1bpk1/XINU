@@ -43,20 +43,17 @@ shellcmd xsh_process_ring(int argc, char *argv[])
   count = processes * rounds;
 
   // create our semaphores
-  sid32 proctrl = semcreate(0);
+  sid32 proctrl[MAXPROC];
   sid32 isdone = semcreate(0);
 
   int i;
   for (i = 0; i < processes; i++) {
-    if (version == CHAOS) {
-      resume(create(chaosring, 1024, 20, "process_ring", 2, i, isdone));
-    } else {
-      resume(create(processring, 1024, 20, "process_ring", 3, i, proctrl, isdone));
-    }
+    proctrl[i] = semcreate(0);
+    resume(create(processring, 1024, 20, "process_ring", 3, i, proctrl, isdone));
   }
 
-  // get things started if we aren't hanging
-  if (version != HANG) { signal(proctrl); }
+  // get things started if we're relying on semaphores
+  if (version == WORK) { signal(proctrl[0]); }
 
   // wait for above processes to finish so the prompt doesn't print too early
   wait(isdone);

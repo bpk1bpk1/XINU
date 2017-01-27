@@ -71,23 +71,15 @@ void loopring (int ring_element)
   while (1)
     {
       //Enters an infinite loop
-      if(variable1[ring_element] % processes == (processes - ring_element)%processes)
+      if ((count + ring_element) % processes == 0)
 	{
-	  count = variable1[ring_element];
-	  kprintf("Ring Element %d : Round %d : Value %d\n", ring_element, rounds-1-((count-1)/processes), count);
-	  variable1[(ring_element + 1) % processes] = --count;
-
-	  if(count == 0)
-	    {
-	      count--;
-	      kprintf("Zero!!");
-	      return;
-	    }
+	  kprintf("Ring Element %d : Round %d : Value %d\n", ring_element, rounds-1-((count-1)/processes), count--);
 	}
-
-      if(count < 0) { return; }
-
-
+    }
+  if(count <= 0)
+    {
+      kprintf("Zero!!");
+      return;
     }
 }
 

@@ -1,4 +1,4 @@
-# Assignment 2 - Robert Henderson and Burde Prerana Kamath
+# Assignment 2 - Robert "Bo" Henderson and Burde Prerana Kamath
 
 This assignment provided an overview as to how processes run concurrently, why this is so important, and provided hand-on experience writing concurrent code.
 

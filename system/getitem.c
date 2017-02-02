@@ -51,10 +51,7 @@ pid32	getlast(
 	return getitem(queuetab[tail].qprev);
 }
 
-/*------------------------------------------------------------------------
- *  getitem  -  Remove a process from an arbitrary point in a queue
- *------------------------------------------------------------------------
- */
+
 pid32	getitem(
 	  pid32		pid		/* ID of process to remove	*/
 	)

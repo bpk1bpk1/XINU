@@ -17,6 +17,11 @@ pid32	getfirst(
 		return EMPTY;
 	}
 
+	if( isbadqid(q))
+	{
+		printf("Not valid Queue id \n");
+		return SYSERR;
+	}
 	head = queuehead(q);
 	return getitem(queuetab[head].qnext);
 }
@@ -34,7 +39,13 @@ pid32	getlast(
 
 	if (isempty(q)) {
 		return EMPTY;
-	}
+}
+
+	if(isbadqid(q))
+{
+	printf("Not valid Queue id \n");
+	return SYSERR;
+}
 
 	tail = queuetail(q);
 	return getitem(queuetab[tail].qprev);
@@ -49,7 +60,12 @@ pid32	getitem(
 	)
 {
 	pid32	prev, next;
-
+	
+	if(isbadpid(pid))
+	{
+		printf("Invalid process id \n");
+		return SYSERR;
+	}
 	next = queuetab[pid].qnext;	/* Following node in list	*/
 	prev = queuetab[pid].qprev;	/* Previous node in list	*/
 	queuetab[prev].qnext = next;

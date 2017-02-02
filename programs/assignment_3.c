@@ -110,8 +110,7 @@ void priority_enqueue(int ids,int values)
 				if(find -> next == NULL)
 				break;
 				find = find -> next;
-			}
-
+	}
 			if(find -> next == NULL && link1 -> key < find -> key)
 			{
 				rear -> next = link1;
@@ -137,7 +136,7 @@ void enqueue(int id, int value)
 	struct node *link = (struct node*) malloc (sizeof(struct node));
 	link -> pid = id;
 	link -> key = value;
-
+//Nothing is present in the queue
 	if(front == NULL)
 	{
 		front= rear = link;
@@ -173,7 +172,7 @@ struct node* dequeue()
 		rear  = NULL;
 		return temp;
 	}
-	else
+	else //Making sure all the pointers are taken care of
 	{
 		struct node* tempo1 = front;
 		temp = tempo1;
@@ -184,7 +183,7 @@ struct node* dequeue()
 	}
 
 
-	//returning the deleted element
+	//returning temp returns the deleted element
 }
 		
 
@@ -195,7 +194,7 @@ void display()
 	{
 	struct node *temp1 = front;
 	printf(" \n");
-	//Navigate till the end of the list
+	//Navigate till the end of the list till the next node exists
 	while(temp1 != NULL)
 	{
 		printf(" Processid : %d , Keyvalue : %d \n", temp1 -> pid, temp1 -> key);

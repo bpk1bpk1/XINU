@@ -33,7 +33,8 @@ syscall	kill(
 
 	switch (prptr->prstate) {
 	case PR_CURR:
-		resched(PR_FREE);	/* Suicide */
+		prptr->prstate = PR_FREE;	/* Suicide */
+		resched(-1);
 
 	case PR_SLEEP:
 	case PR_RECTIM:

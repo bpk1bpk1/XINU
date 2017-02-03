@@ -52,6 +52,6 @@ void	clkhandler()
 
 	if((--preempt) == 0) {
 		preempt = QUANTUM;
-		resched();
+		resched(-1);
 	}
 }

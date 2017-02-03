@@ -28,9 +28,10 @@ syscall	wait(
 
 	if (--(semptr->scount) < 0) {		/* If caller must block	*/
 		prptr = &proctab[currpid];
+		prptr->prstate = PR_WAIT;	/* Set state to waiting	*/
 		prptr->prsem = sem;		/* Record semaphore ID	*/
 		enqueue(currpid,semptr->squeue);/* Enqueue on semaphore	*/
-		resched(PR_WAIT);			/* Set state to waiting and reschedule	*/
+		resched(-1);			/*   and reschedule	*/
 	}
 
 	restore(mask);

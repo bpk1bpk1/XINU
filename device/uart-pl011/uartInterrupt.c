@@ -142,7 +142,13 @@ interrupt uartInterrupt(void)
 
     
     /* Now that the UART interrupt handler is finished, we can safely wake up
-     * any threads that were signaled.
+     * any threads that were signaled.  */
+    /* from exinu.  Xinu has a function to enable/disable deferral
+
+    if (--resdefer > 0)
+    {
+        resdefer = 0;
+    }
     */
     resched_cntl(DEFER_STOP);
 }

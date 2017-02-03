@@ -8,10 +8,10 @@ struct	defer	Defer;
  *  resched  -  Reschedule processor to highest priority eligible process
  *------------------------------------------------------------------------
  */
-void	resched(int disposition) /* Assumes interrupts are disabled	*/
+void	resched(int disposition)		/* Assumes interrupts are disabled	*/
 {
-	struct procent *ptold;	 /* Ptr to table entry for old process	*/
-	struct procent *ptnew;	 /* Ptr to table entry for new process	*/
+	struct procent *ptold;	/* Ptr to table entry for old process	*/
+	struct procent *ptnew;	/* Ptr to table entry for new process	*/
 
 	/* If rescheduling is deferred, record attempt and return */
 
@@ -24,15 +24,7 @@ void	resched(int disposition) /* Assumes interrupts are disabled	*/
 
 	ptold = &proctab[currpid];
 
-	/* Check and maybe set the disposition */
-
-	if (disposition < -1 || disposition > 7) {
-	  return;
-	} else if (disposition == -1) {
-	  /* do nothing */
-	} else {
-	  ptold->prstate = disposition;
-	}
+	// kprintf("%d", disposition);
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {

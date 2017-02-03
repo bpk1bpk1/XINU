@@ -13,16 +13,6 @@ void	resched(int disposition) /* Assumes interrupts are disabled	*/
 	struct procent *ptold;	 /* Ptr to table entry for old process	*/
 	struct procent *ptnew;	 /* Ptr to table entry for new process	*/
 
-	/* Check and maybe set the disposition */
-
-	if (disposition < -1 || disposition > 7) {
-	  return;
-	} else if (disposition == -1) {
-	  /* do nothing */
-	} else {
-	  proctab[currpid].prstate = disposition;
-	}
-
 	/* If rescheduling is deferred, record attempt and return */
 
 	if (Defer.ndefers > 0) {
@@ -33,6 +23,16 @@ void	resched(int disposition) /* Assumes interrupts are disabled	*/
 	/* Point to process table entry for the current (old) process */
 
 	ptold = &proctab[currpid];
+
+	/* Check and maybe set the disposition */
+
+	if (disposition < -1 || disposition > 7) {
+	  return;
+	} else if (disposition == -1) {
+	  /* do nothing */
+	} else {
+	  ptold->prstate = disposition;
+	}
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {

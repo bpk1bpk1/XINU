@@ -23,8 +23,12 @@ void	resched(int disposition)		/* Assumes interrupts are disabled	*/
 	/* Point to process table entry for the current (old) process */
 
 	ptold = &proctab[currpid];
+	
+	/* check and maybe set the prstate based on disposition */
 
-	// kprintf("%d", disposition);
+	if (disposition >= 0 && disposition <= 7) {
+	  ptold->prstate = disposition;
+	}
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->prprio > firstkey(readylist)) {

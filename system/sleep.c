@@ -44,7 +44,7 @@ syscall	sleepms(
 	}
 
 	proctab[currpid].prstate = PR_SLEEP;
-	resched(-1);
+	resched(PR_SLEEP);
 	restore(mask);
 	return OK;
 }

@@ -27,7 +27,6 @@ umsg32	recvtime(
 			restore(mask);
 			return SYSERR;
 		}
-		prptr->prstate = PR_RECTIM;
 		resched(PR_RECTIM);
 	}
 

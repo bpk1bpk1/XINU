@@ -27,8 +27,7 @@ umsg32	recvtime(
 			restore(mask);
 			return SYSERR;
 		}
-		prptr->prstate = PR_RECTIM;
-		resched();
+		resched(PR_RECTIM);
 	}
 
 	/* Either message arrived or timer expired */

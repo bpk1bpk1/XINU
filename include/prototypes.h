@@ -424,7 +424,7 @@ extern	umsg32	recvclr(void);
 extern	umsg32	recvtime(int32);
 
 /* in file resched.c */
-extern	void	resched(void);
+extern	void	resched(int disposition);
 
 /* in file intutils.S */
 extern	void	restore(intmask);

@@ -1,0 +1,37 @@
+
+The critical piece of the assembly code is shown below. As you can see, the two sets of commands are identical up until command 38 at which point two lines are inserted in the after version:
+
+  3c:	     e3500007 	  cmp	   r0, #7
+  40:	     918c00b3 	  strhls   r0, [ip, r3]
+
+After these two lines, the pre-modification and post-modified resched commands go back to being identical. These two lines make sense given the high-level C code that was added to resched:
+
+      if (disposition >= 0 && disposition <= 7) {
+        ptold->prstate = disposition;
+	}
+
+We added two operations: a conditional statement followed by an assignment. It should be noted however, that this modification is not ideal as it needs to be negated in several situations by passing a disposition to resched() that is outside the above conditional.
+
+-----
+
+Before the modification to resched():
+...
+  30:	e1a0c18c	lsl	ip, ip, #3
+  34:	e59f3094 	ldr	r3, [pc, #148]	; d0 <resched+0xd0>
+  38:	e08c4003 	add	r4, ip, r3
+  3c:	e19c20b3 	ldrh	r2, [ip, r3]
+  40:	e3520001 	cmp	r2, #1
+  44:	1a00000d 	bne	80 <resched+0x80>
+...
+
+vs 
+
+After the modification to resched():
+...
+  30:	e1a0c18c	lsl	ip, ip, #3
+  34:	e59f30a0 	ldr	r3, [pc, #160]	; dc <resched+0xdc>
+  38:	e08c5003 	add	r5, ip, r3
+  3c:	e3500007 	cmp	r0, #7
+  40:	918c00b3 	strhls	r0, [ip, r3]
+  44:	e19c20b3 	ldrh	r2, [ip, r3]
+...

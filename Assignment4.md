@@ -6,6 +6,16 @@ compile with this command:
 `pandoc -V geometry:margin=1in -o Assignment4.pdf Assignment4.md` 
 -->
 
+<!--
+TODO:
+ - Verify that changes made for Q2 won't crash xinu
+ - Write more for Q2
+ - Verify that we aren't missing anything on Q1
+ - Verify that getpid() works for Q2's "whatever process searches the process table"
+ - Maybe ask AI about Q3 during lab to verify that our answer works..?
+-->
+
+
 ## Question 1
 
 > Consider a modification to the code that stores processor state in the process table instead of on the process’s stack (e.g., assume the process table entry contains an array that holds the contents of registers). What are the advantages of each approach? 

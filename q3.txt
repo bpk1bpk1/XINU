@@ -1,0 +1,16 @@
+Question 3 
+
+
+
+switch (prptr->prstate) {
+
+case PR_CURR:
+			prptr->prstate = PR_DYING;
+			
+			
+case PR_READY:
+			getitem(prstate == PR_DYING);
+			prptr->prstate = PR_FREE; /* Suicide */
+			resched();
+			
+}

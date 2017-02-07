@@ -8,19 +8,22 @@ compile with this command:
 
 ## Question 1
 
-> Consider a modification to the code that stores processor state in the process table instead of on the process’s stack (i.e., assume the process table entry contains an array that holds the contents of registers). What are the advantages of each approach? 
+> Consider a modification to the code that stores processor state in the process table instead of on the process’s stack (e.g., assume the process table entry contains an array that holds the contents of registers). What are the advantages of each approach? 
 
-Process Table:
+**Process Table:**
 
-If the information is stored in the process table, then the system will only have to push/pop the state information everytime the process changes. This will save time and memory. In addition to this, no stack pointer will be needed. Moreover, pointers are slower and could possibly lead to memoy leakage. Hence, the user of pointers can be avoided too.
+ - Pro: Everything we need for a context switch is in the process table; that should speed things up
+ - Con: Redundant data storage, the stack inherently needs to store some of the same info that the registers would dump into the process table (eg, argument values)
+ - Con: Process table is bloated & we might need more storage space for relative pointers
 
-Stack:
+**Process Stack:**
 
- - Stack can be used for pushing and popping in the Last in First Out way where the process that has been entered the last would be popped first.
- - It isn't useful for reversing the way the processes will be popped out. 
- - It can be very useful for navigating tree structures. 
- - Comes in handy for remembering a particular process state. If there is another process that modifies the state it can still revert to the previous state
- - Example: CPU registers, Implementing undo/redo behaviour.
+ - Pro: Process table is smaller, more compact
+ - Pro: no need to store redundant data, register data is stored in one place: the stack
+ - Con: Needs to move between process table and stack during context switch; that should slow things down
+
+
+<!-- these Non-Breaking SPaces (nbps) just push Q2 to the next page -->
 
 &nbsp;
 

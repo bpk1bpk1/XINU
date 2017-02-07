@@ -22,14 +22,145 @@ Stack:
  - Comes in handy for remembering a particular process state. If there is another process that modifies the state it can still revert to the previous state
  - Example: CPU registers, Implementing undo/redo behaviour.
 
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
+
+&nbsp;
 
 ## Question 2
 
 > When a process kills itself, kill deallocates the stack and then calls resched, which means the process continues to use the deallocated stack. Redesign the system so a current process does not deallocate its own stack, but instead moves to a new state, PR\_DYING. Arrange for whatever process searches the process table to look for dying processes, free the stack, and move the entry to PR\_FREE. 
 
+```c
+/* kill.c - kill */
+
+#include <xinu.h>
+
+/*------------------------------------------------------------------------
+ *  kill  -  Kill a process and remove it from the system
+ *------------------------------------------------------------------------
+ */
+syscall	kill(
+	  pid32		pid		/* ID of process to kill	*/
+	)
+{
+	intmask	mask;			/* Saved interrupt mask		*/
+	struct	procent *prptr;		/* Ptr to process' table entry	*/
+	int32	i;			/* Index into descriptors	*/
+
+	mask = disable();
+	if (isbadpid(pid) || (pid == NULLPROC)
+	    || ((prptr = &proctab[pid])->prstate) == PR_FREE) {
+		restore(mask);
+		return SYSERR;
+	}
+
+	if (--prcount <= 1) {		/* Last user process completes	*/
+		xdone();
+	}
+
+	send(prptr->prparent, pid);
+	for (i=0; i<3; i++) {
+		close(prptr->prdesc[i]);
+	}
+
+	switch (prptr->prstate) {
+	case PR_CURR:
+        prptr->prstate = PR_DYING;
+		resched();
+
+	case PR_SLEEP:
+	case PR_RECTIM:
+		unsleep(pid);
+		prptr->prstate = PR_FREE;
+		break;
+
+	case PR_WAIT:
+		semtab[prptr->prsem].scount++;
+		/* Fall through */
+
+	case PR_READY:
+		getitem(pid);		/* Remove from queue */
+		/* Fall through */
+
+	default:
+		prptr->prstate = PR_FREE;
+	}
+
+	restore(mask);
+	return OK;
+}
+```
+
+I think that newpid() would be a good place to free the stack instead. It can deliver the coup de grace to a dying process and then use that pid the same way it might use one that's PR_FREE.
+
+```c
+/* create.c - create, newpid */
+
+#include <xinu.h>
+
+/*------------------------------------------------------------------------
+ *  newpid  -  Obtain a new (free) process ID
+ *------------------------------------------------------------------------
+ */
+local	pid32	newpid(void)
+{
+	uint32	i;			/* iterate through all processes*/
+	static	pid32 nextpid = 1;	/* position in table to try or	*/
+					/*  one beyond end of table	*/
+
+	/* check all NPROC slots */
+
+	for (i = 0; i < NPROC; i++) {
+		nextpid %= NPROC;	/* wrap around to beginning */
+		if (proctab[nextpid].prstate == PR_FREE) {
+			return nextpid++;
+        } else if (proctab[nextpid].prstate == PR_DYING) {
+            prptr = &proctab[nextpid];
+            freestk(prptr->prstkbase, prptr->prstklen);      // Free stack here instead
+            prptr->prstate = PR_FREE;
+			return nextpid++;
+		} else {
+			nextpid++;
+		}
+	}
+	return (pid32) SYSERR;
+}
+
+```
+
+&nbsp;
+
+&nbsp;
+
 ## Question 3
 
 > Function resume saves the resumed process’s priority in a local variable before calling ready. Show that if it references prptr->prprio after the call to ready, resume can return a priority value that the resumed process never had (not even after resumption).
+
+A modified copy of resume.c can be found below. It has been modifed to reflect the question being asked.
 
 ```c
 /* resume.c - resume */
@@ -45,7 +176,7 @@ pri16	resume(
 	)
 {
 	intmask	mask;			/* Saved interrupt mask		*/
-	struct	procent \*prptr;	/* Ptr to process' table entry	*/
+	struct	procent *prptr;	/* Ptr to process' table entry	*/
 	pri16	prio;			/* Priority to return		*/
 
 	mask = disable();
@@ -58,14 +189,14 @@ pri16	resume(
 		restore(mask);
 		return (pri16)SYSERR;
 	}
-	prio = prptr->prprio;		/* Record priority to return	*/
-	ready(pid);
-	restore(mask);
+	ready(pid);                 /* Opportunity 1 */
+	prio = prptr->prprio;		/* save a copy of the priority to return later */
+	restore(mask);              /* Opportunity 2 */
 	return prio;
 }
 ```
 
-The important thing to notice is that, in the last few lines there are 2 opportunities for an arbirary number of other functions to execute: 
+The important thing to notice is that, in the last few lines there are 2 opportunities for an arbirary number of other functions to execute.
 
  1. Ready calls resched() internally
  2. restore(mask) might re-enable interrupts causing another process to start executing. 

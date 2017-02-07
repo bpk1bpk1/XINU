@@ -31,32 +31,43 @@ Stack:
 
 > Function resume saves the resumed process’s priority in a local variable before calling ready. Show that if it references prptr->prprio after the call to ready, resume can return a priority value that the resumed process never had (not even after resumption).
 
-
-## Markdown tips/tricks
-
-lines that start with # are headers, the more # there are, the smaller the text so "# big header" "### smaller header" "##### very small header"
-
-Here's some pretty code.. use three backticks followed by a language name for syntax highlighting.. c should be the only language we care about though.
-
 ```c
+/* resume.c - resume */
+
 #include <xinu.h>
-#include <string.h>
-#include <stdio.h>
 
-shellcmd xsh_hello(int nargs, char *args[]) {
-	if (nargs > 2) {
-		printf("%s: Too many arguments\n", args[0]);
-		return 1;
-	}
-	
-	if (nargs < 2) {
-		printf("Too few arguments \n");
-	}
+/*------------------------------------------------------------------------
+ *  resume  -  Unsuspend a process, making it ready
+ *------------------------------------------------------------------------
+ */
+pri16	resume(
+	  pid32		pid		/* ID of process to unsuspend	*/
+	)
+{
+	intmask	mask;			/* Saved interrupt mask		*/
+	struct	procent \*prptr;	/* Ptr to process' table entry	*/
+	pri16	prio;			/* Priority to return		*/
 
-	if (nargs == 2) {
-		printf("Hello %s, Welcome to the world of Xinu!!\n", args[1]);
+	mask = disable();
+	if (isbadpid(pid)) {
+		restore(mask);
+		return (pri16)SYSERR;
 	}
-	
-	return 0;
+	prptr = &proctab[pid];
+	if (prptr->prstate != PR_SUSP) {
+		restore(mask);
+		return (pri16)SYSERR;
+	}
+	prio = prptr->prprio;		/* Record priority to return	*/
+	ready(pid);
+	restore(mask);
+	return prio;
 }
 ```
+
+The important thing to notice is that, in the last few lines there are 2 opportunities for an arbirary number of other functions to execute: 
+
+ 1. Ready calls resched() internally
+ 2. restore(mask) might re-enable interrupts causing another process to start executing. 
+
+Note that at either of these points, another process could call chprio() and change the priority of some process. If we swapped the lines `prio = prptr->prprio` and `ready(pid)` then we're saving our local variable in between these two points in time when the target process's prioritiy might change. As a result, there is a change that this processes's priority might change, this changed priority is saved, and then it's changed again right before the saved value is returned. In this case, the returned priority is neither the priority of the process before it was resumed nor the priority of the process after it was resumed.

@@ -1,0 +1,10 @@
+5.9 
+Consider a modification to the code that stores processor state in the process table instead
+of on the process’s stack (i.e., assume the process table entry contains an array that holds
+the contents of registers). What are the advantages of each approach?
+
+Process table: 
+If the information is stored in the process table, then we need not have to push/pop the registers/processor state info from the stack everytime there is context switching using resched. This will save time and memory. Also, no stack pointer will be needed. Moreover, pointers are slower and lead to memoy leakage. This can be avoided.
+
+Stack:
+You can put stuff on and then pop them off. Invaluable for reversing things. Very handy for remembering state, doing something else that changes state and then reverting to the previous state, for instance CPU registers or for implementing undo/redo behaviour.

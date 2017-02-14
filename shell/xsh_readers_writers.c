@@ -4,66 +4,65 @@
 #include <string.h>
 #include <stdio.h>
 
+#define MAXPROC 10
+#define MAXCYCLES 10
+#define MAXMAXDELAY 5000
+#define MINALL 1
+#define REQNARGS 6
+
 /*------------------------------------------------------------------------
  * xsh_date - obtain and print the current month, day, year, and time
  *------------------------------------------------------------------------
  */
 shellcmd xsh_readers_writers(int nargs, char *args[]) {
 
-	int32	retval;			/* return value			*/
-	uint32	now;			/* current local time		*/
-	char	datestr[64];		/* printable date in ascii	*/
+  // input variable declarations
+  int nWriters;
+  int nReaders;
+  int nWriteCycles;
+  int nReadCycles;
+  int maxdelay; // in miliseconds
 
-	/* Output info for '--help' argument */
+  // make sure the correct number of arguments were passed or set sensible defaults
+  if (nargs == 1) {
+    nWriters = 3;
+    nReaders = 3;
+    nWriteCycles = 5;
+    nReadCycles = 5;
+    maxdelay = 1000;
+  } else if (nargs > REQNARGS) {
+    kprintf("Error, too many arguments. Expected %d.\n", REQNARGS-1); return 1;
+  } else if (nargs < REQNARGS) {
+    kprintf("Error, too few arguments. Expected %d.\n", REQNARGS-1); return 1;
+  } else {
+    // validate the number of writers
+    nWriters = atoi(args[1]);
+    if (nWriters > MAXPROC || nWriters < MINALL) {
+      kprintf("Error, invalid number of writers: %d\n", nWriters); return 1;
+    }  
+    // validate the number of readers
+    nReaders = atoi(args[2]);
+    if (nReaders > MAXPROC || nReaders < MINALL) {
+      kprintf("Error, invalid number of readers: %d\n", nReaders); return 1;
+    }  
+    // validate the number of write cycles
+    nWriteCycles = atoi(args[3]);
+    if (nWriteCycles > MAXCYCLES || nWriteCycles < MINALL) {
+      kprintf("Error, invalid number of write cycles: %d\n", nWriteCycles); return 1;
+    }  
+    // validate the number of read cycles
+    nReadCycles = atoi(args[4]);
+    if (nReadCycles > MAXCYCLES || nReadCycles < MINALL) {
+      kprintf("Error, invalid number of read cycles: %d\n", nReadCycles); return 1;
+    }  
+    // validate the maxdelay
+    maxdelay = atoi(args[5]);
+    if (maxdelay > MAXMAXDELAY || maxdelay < MINALL) {
+      kprintf("Error, invalid max delay: %d\n.", maxdelay); return 1;
+    }  
+  }
 
-	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("Usage: %s\n\n", args[0]);
-		printf("Description:\n");
-		printf("\tDisplays the current date and time\n");
-		printf("Options (one per invocation):\n");
-		printf("\t-f\tforce a time server request to be sent\n");
-		printf("\t-d\tset daylight savings time on\n");
-		printf("\t-s\tset standard time (not daylight savings)\n");
-		printf("\t-a\tset daylight savings to automatic\n");
-		printf("\t--help\tdisplay this help and exit\n");
-		return 0;
-	}
+  kprintf("Writers: %d\tReaders: %d\tWrite Cycles: %d\tRead Cycles: %d\tMax Delay: %d\n", nWriters, nReaders, nWriteCycles, nReadCycles, maxdelay);
 
-	/* Check argument count */
-
-	if (nargs > 2) {
-		fprintf(stderr, "%s: too many arguments\n", args[0]);
-		fprintf(stderr, "Try '%s --help' for more information\n",
-			args[0]);
-		return 1;
-	}
-
-	if (nargs == 2) {
-		if (strncmp(args[1], "-f", 3) == 0) {
-			Date.dt_bootvalid = FALSE;
-		} else if (strncmp(args[1], "-d", 3) == 0) {
-			Date.dt_daylight = DATE_DST_ON;
-		} else if (strncmp(args[1], "-s", 3) == 0) {
-			Date.dt_daylight = DATE_DST_OFF;
-		} else if (strncmp(args[1], "-a", 3) == 0) {
-			Date.dt_daylight = DATE_DST_AUTO;
-		} else {
-			fprintf(stderr, "%s: invalid argument\n", args[0]);
-			fprintf(stderr,
-				"Try '%s --help' for more information\n",
-				args[0]);
-			return 1;
-		}
-	}
-
-	retval = gettime(&now);
-	if (retval == SYSERR) {
-		fprintf(stderr,
-			"%s: could not obtain the current date\n",
-			args[0]);
-		return 1;
-	}
-	ascdate(now, datestr);
-	printf("%s\n", datestr);
-	return 0;
+  return 0;
 }

@@ -4,66 +4,51 @@
 #include <string.h>
 #include <stdio.h>
 
+#define MAXPHILOS 10
+#define MAXCYCLES 10
+#define MAXMAXDELAY 5000
+#define MINALL 1
+#define REQNARGS 4
+
 /*------------------------------------------------------------------------
  * xsh_date - obtain and print the current month, day, year, and time
  *------------------------------------------------------------------------
  */
 shellcmd xsh_dining_philosophers(int nargs, char *args[]) {
 
-	int32	retval;			/* return value			*/
-	uint32	now;			/* current local time		*/
-	char	datestr[64];		/* printable date in ascii	*/
+  // input variable declarations
+  int nphilos;  // in bytes
+  int ncycles;  // in bytes
+  int maxdelay; // in miliseconds
 
-	/* Output info for '--help' argument */
+  // make sure the correct number of arguments were passed or set sensible defaults
+  if (nargs == 1) {
+    nphilos = 10;
+    ncycles = 10;
+    maxdelay = 1000;
+  } else if (nargs > REQNARGS) {
+    kprintf("Error, too many arguments. Expected %d.\n", REQNARGS-1); return 1;
+  } else if (nargs < REQNARGS) {
+    kprintf("Error, too few arguments. Expected %d.\n", REQNARGS-1); return 1;
+  } else {
+    // validate the buffer size
+    nphilos = atoi(args[1]);
+    if (nphilos > MAXPHILOS || nphilos < MINALL) {
+      kprintf("Error, invalid number of philosophers: %d\n", nphilos); return 1;
+    }  
+    // validate the message size
+    ncycles = atoi(args[2]);
+    if (ncycles > MAXCYCLES || ncycles < MINALL) {
+      kprintf("Error, invalid number of cycles: %d\n", ncycles); return 1;
+    }  
+    // validate the max delay
+    maxdelay = atoi(args[3]);
+    if (maxdelay > MAXMAXDELAY || maxdelay < MINALL) {
+      kprintf("Error, invalid max delay: %d\n.", maxdelay); return 1;
+    }  
+  }
 
-	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("Usage: %s\n\n", args[0]);
-		printf("Description:\n");
-		printf("\tDisplays the current date and time\n");
-		printf("Options (one per invocation):\n");
-		printf("\t-f\tforce a time server request to be sent\n");
-		printf("\t-d\tset daylight savings time on\n");
-		printf("\t-s\tset standard time (not daylight savings)\n");
-		printf("\t-a\tset daylight savings to automatic\n");
-		printf("\t--help\tdisplay this help and exit\n");
-		return 0;
-	}
+  kprintf("Philosophers: %d\tCycles: %d\tMax Delay: %d\n", nphilos, ncycles, maxdelay);
 
-	/* Check argument count */
-
-	if (nargs > 2) {
-		fprintf(stderr, "%s: too many arguments\n", args[0]);
-		fprintf(stderr, "Try '%s --help' for more information\n",
-			args[0]);
-		return 1;
-	}
-
-	if (nargs == 2) {
-		if (strncmp(args[1], "-f", 3) == 0) {
-			Date.dt_bootvalid = FALSE;
-		} else if (strncmp(args[1], "-d", 3) == 0) {
-			Date.dt_daylight = DATE_DST_ON;
-		} else if (strncmp(args[1], "-s", 3) == 0) {
-			Date.dt_daylight = DATE_DST_OFF;
-		} else if (strncmp(args[1], "-a", 3) == 0) {
-			Date.dt_daylight = DATE_DST_AUTO;
-		} else {
-			fprintf(stderr, "%s: invalid argument\n", args[0]);
-			fprintf(stderr,
-				"Try '%s --help' for more information\n",
-				args[0]);
-			return 1;
-		}
-	}
-
-	retval = gettime(&now);
-	if (retval == SYSERR) {
-		fprintf(stderr,
-			"%s: could not obtain the current date\n",
-			args[0]);
-		return 1;
-	}
-	ascdate(now, datestr);
-	printf("%s\n", datestr);
-	return 0;
+  return 0;
 }

@@ -8,6 +8,12 @@
 /* Table of Xinu shell commands and the function associated with each	*/
 /************************************************************************/
 const	struct	cmdent	cmdtab[] = {
+	{"dining-philosophers",	TRUE,	xsh_dining_philosophers},
+	{"dp",                	TRUE,	xsh_dining_philosophers},
+	{"readers-writers",	TRUE,	xsh_readers_writers},
+	{"rw",           	TRUE,	xsh_readers_writers},
+	{"producer-consumer",	TRUE,	xsh_producer_consumer},
+	{"pc",	                TRUE,	xsh_producer_consumer},
 	{"argecho",	TRUE,	xsh_argecho},
 	{"cat",		FALSE,	xsh_cat},
 	{"clear",	TRUE,	xsh_clear},

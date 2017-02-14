@@ -4,66 +4,50 @@
 #include <string.h>
 #include <stdio.h>
 
+#define MAXBUF 255
+#define MINBUF 1
+#define MAXMSG 255
+#define MINMSG 1
+#define MAXMAXDELAY 5000
+#define MINMAXDELAY 1
+
 /*------------------------------------------------------------------------
  * xsh_date - obtain and print the current month, day, year, and time
  *------------------------------------------------------------------------
  */
 shellcmd xsh_producer_consumer(int nargs, char *args[]) {
 
-	int32	retval;			/* return value			*/
-	uint32	now;			/* current local time		*/
-	char	datestr[64];		/* printable date in ascii	*/
+  // input variable declarations
+  int bufsize;  // in bytes
+  int msgsize;  // in bytes
+  int maxdelay; // in miliseconds
 
-	/* Output info for '--help' argument */
+  // make sure the correct number of arguments were passed
+  if (nargs > 4) {
+    kprintf("Error, too many arguments. Expected 3.\n"); return 1;
+  } else if (nargs < 4) {
+    kprintf("Error, too few arguments. Expected 3.\n"); return 1;
+  }
 
-	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("Usage: %s\n\n", args[0]);
-		printf("Description:\n");
-		printf("\tDisplays the current date and time\n");
-		printf("Options (one per invocation):\n");
-		printf("\t-f\tforce a time server request to be sent\n");
-		printf("\t-d\tset daylight savings time on\n");
-		printf("\t-s\tset standard time (not daylight savings)\n");
-		printf("\t-a\tset daylight savings to automatic\n");
-		printf("\t--help\tdisplay this help and exit\n");
-		return 0;
-	}
+  // validate the bufsize
+  bufsize = atoi(args[1]);
+  if (bufsize > MAXBUF || bufsize < MINBUF) {
+    kprintf("Error, invalid buffer size: %d\n", bufsize); return 1;
+  }  
 
-	/* Check argument count */
+  // validate the msgsize
+  msgsize = atoi(args[2]);
+  if (msgsize > MAXMSG || msgsize < MINMSG) {
+    kprintf("Error, invalid message size: %d\n", msgsize); return 1;
+  }  
 
-	if (nargs > 2) {
-		fprintf(stderr, "%s: too many arguments\n", args[0]);
-		fprintf(stderr, "Try '%s --help' for more information\n",
-			args[0]);
-		return 1;
-	}
+  // validate the maxdelay
+  maxdelay = atoi(args[3]);
+  if (maxdelay > MAXMAXDELAY || msgsize < MINMSG) {
+    kprintf("Error, invalid max delay: %d\n.", maxdelay); return 1;
+  }  
 
-	if (nargs == 2) {
-		if (strncmp(args[1], "-f", 3) == 0) {
-			Date.dt_bootvalid = FALSE;
-		} else if (strncmp(args[1], "-d", 3) == 0) {
-			Date.dt_daylight = DATE_DST_ON;
-		} else if (strncmp(args[1], "-s", 3) == 0) {
-			Date.dt_daylight = DATE_DST_OFF;
-		} else if (strncmp(args[1], "-a", 3) == 0) {
-			Date.dt_daylight = DATE_DST_AUTO;
-		} else {
-			fprintf(stderr, "%s: invalid argument\n", args[0]);
-			fprintf(stderr,
-				"Try '%s --help' for more information\n",
-				args[0]);
-			return 1;
-		}
-	}
+  kprintf("Buffer Size: %d\tMessage Size: %d\tMax Delay: %d\n", bufsize, msgsize, maxdelay);
 
-	retval = gettime(&now);
-	if (retval == SYSERR) {
-		fprintf(stderr,
-			"%s: could not obtain the current date\n",
-			args[0]);
-		return 1;
-	}
-	ascdate(now, datestr);
-	printf("%s\n", datestr);
-	return 0;
+  return 0;
 }

@@ -2,6 +2,8 @@
 
 #include <xinu.h>
 
+uint32 rseed;
+
 /*------------------------------------------------------------------------
  *  rand_delay  -  Delay the calling process my some number of seconds
  *------------------------------------------------------------------------
@@ -15,10 +17,10 @@ syscall	rand_delay(
   uint32 delay;
 
   // returns an integer that increases every second
-  gettime(&now); 
+  rseed += gettime(&now); 
 
   // scramble this integer
-  delay = ((now   * 12345) % maxdelay);
+  delay = ((rseed++   * 12345) % maxdelay);
   delay = ((delay * 56789) % maxdelay);
   delay = ((delay * 76543) % maxdelay);
 

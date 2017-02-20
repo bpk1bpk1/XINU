@@ -7,7 +7,7 @@ syscall mutex_unlock(volatile mutex_t* lock)
 		return SYSERR;
 	}
 
-	*lock = 0 //Reinitialising the value 
+	*lock = 0;
 
 		return OK;
 

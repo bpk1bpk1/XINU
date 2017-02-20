@@ -8,6 +8,7 @@ syscall cond_init(volatile cond_t* cv)
 		return SYSERR;
 	}
 
+
 	*cv = 1;
 	return OK;
 }

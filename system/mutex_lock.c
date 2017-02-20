@@ -8,15 +8,7 @@ syscall mutex_lock(volatile mutex_t* lock)
 		return SYSERR;
 	}
 
-	while(previous)
-	{
-		intmask mask;
-		mask = disable();
-		mutex_t = previous;
-		previous = *lock;
-		*lock = 1;
-		restore(mask);
-	}
+	while(test-set(lock));
 
 	return OK;
 }

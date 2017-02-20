@@ -7,11 +7,9 @@ syscall mutex_create(volatile *mutex_t lock)
 		return SYSERR;
 	}
 
-	if(previous) //Setting the initial lock for the mutex to NULL
+		*lock = 0;
+		return OK;	
 
-
-
-	return OK;
 }
 
 

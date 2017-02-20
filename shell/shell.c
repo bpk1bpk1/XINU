@@ -40,6 +40,7 @@ const	struct	cmdent	cmdtab[] = {
 	{"test_mmu", 	FALSE, 	xsh_mmu},
 #endif
   {"?",		FALSE,	xsh_help}
+	{"babybird" , FALSE, xsh_babybird}
 };
 
 uint32	ncmd = sizeof(cmdtab) / sizeof(struct cmdent);

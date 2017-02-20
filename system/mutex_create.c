@@ -1,5 +1,4 @@
 #include <xinu.h>
-
 syscall mutex_create(volatile *mutex_t lock)
 {
 	if(lock == NULL)
@@ -8,7 +7,9 @@ syscall mutex_create(volatile *mutex_t lock)
 		return SYSERR;
 	}
 
-	*lock = 0; //Setting the initial lock for the mutex to NULL
+	if(previous) //Setting the initial lock for the mutex to NULL
+
+
 
 	return OK;
 }

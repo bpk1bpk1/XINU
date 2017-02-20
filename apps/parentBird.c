@@ -5,7 +5,7 @@ void parentBird()
 	while(i == 1)
 	{
 		mutex_lock(&parentbird);
-		cond_wait(&parentbird_cond, &parentbird)
+		cond_wait(&parentbird_cond, &parentbird);
 		if(babyEnds == num_babybirds)
 		{
 			break;

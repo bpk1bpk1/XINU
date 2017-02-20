@@ -52,7 +52,7 @@ shellcmd xsh_babybird(int32 argc, char *argv[]) {
 
 	for(i = 0; i< num_babybirds ; i++)
 	{
-		resume(create(babyBird, 1024, 20, "Baby bird",1,i);
+		resume(create(babyBird, 1024, 20, "Baby bird",1,i));
 
 	}
 	

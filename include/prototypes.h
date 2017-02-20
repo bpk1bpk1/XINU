@@ -610,6 +610,13 @@ extern	void	xdone(void);
 /* in file yield.c */
 extern	syscall	yield(void);
 
+syscall mutex_create(volatile mutex_t*);
+syscall mutex_lock(volatile mutex_t*);
+syscall mutex_unlock(volatile mutex_t*);
+syscall cond_wait(volatile cond_t*, volatile mutex_t*);
+syscall cond_init(volatile cond_t*);
+syscall cond_signal(volatile mutex_t*);
+
 /* NETWORK BYTE ORDER CONVERSION NOT NEEDED ON A BIG-ENDIAN COMPUTER */
 #define	htons(x)   ( ( 0xff & ((x)>>8) ) | ( (0xff & (x)) << 8 ) )
 #define	htonl(x)   (  (((x)>>24) & 0x000000ff) | (((x)>> 8) & 0x0000ff00) | \

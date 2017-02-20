@@ -33,6 +33,8 @@ typedef int32	shellcmd;	/* shell command declaration		*/
 typedef int32	process;	/* top-level function of a process	*/
 typedef	void	interrupt;	/* interrupt procedure			*/
 typedef	int32	status;		/* returned status value (OK/SYSERR)	*/
+typedef int32 cond_t;
+typedef int32 mutex_t;
 
 #define local	static		/* Local procedure or variable declar.	*/
 

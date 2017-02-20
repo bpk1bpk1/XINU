@@ -8,11 +8,11 @@ syscall cond_wait(volatile cond_t* cv, volatile mutex_t* lock)
 	}
 
 	mutex_unlock(lock);
+	mutex_t previous;
 	while(previous)
 	{
 		intmask mask;
 		mask = disable();
-		mutex_t = previous;
 		previous = *cv;
 		*cv = 1;
 		restore(mask);

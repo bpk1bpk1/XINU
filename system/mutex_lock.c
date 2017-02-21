@@ -8,7 +8,7 @@ syscall mutex_lock(volatile mutex_t* lock)
 		return SYSERR;
 	}
 
-	while(test-set(lock));
+	while(test_set(lock));
 
 	return OK;
 }

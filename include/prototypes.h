@@ -616,7 +616,6 @@ syscall mutex_unlock(volatile mutex_t*);
 syscall cond_wait(volatile cond_t*, volatile mutex_t*);
 syscall cond_init(volatile cond_t*);
 syscall cond_signal(volatile mutex_t*);
-syscall test-set(volatile mutex_t*);
 
 /* NETWORK BYTE ORDER CONVERSION NOT NEEDED ON A BIG-ENDIAN COMPUTER */
 #define	htons(x)   ( ( 0xff & ((x)>>8) ) | ( (0xff & (x)) << 8 ) )

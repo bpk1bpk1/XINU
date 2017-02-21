@@ -1,5 +1,5 @@
 #include <xinu.h>
-syscall test-set(mutex_t* lock)
+syscall test_set(mutex_t* lock)
 {
 	if(lock == NULL)
 	{
@@ -9,7 +9,7 @@ syscall test-set(mutex_t* lock)
 	intmask mask;
 	mask = disable();
 	mutex_t temp;
-	temp = *lock
+	temp = *lock;
 	*lock = 1;
 	restore(mask);
 	

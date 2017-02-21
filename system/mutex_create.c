@@ -1,5 +1,5 @@
 #include <xinu.h>
-syscall mutex_create(volatile *mutex_t lock)
+syscall mutex_create(volatile mutex_t* lock)
 {
 	if(lock == NULL)
 	{

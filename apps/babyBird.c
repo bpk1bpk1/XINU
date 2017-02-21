@@ -1,4 +1,4 @@
-#include <baby_bird.h>
+#include <babybird.h>
 void babyBird(int id_bird)
 {
 	int i = 0;
@@ -13,7 +13,7 @@ void babyBird(int id_bird)
 			mutex_unlock(&babybird1);
 		}
 
-	printf("Baby bird %d ate a worm!(%d total)", id_bird, wormsLeft);
+	printf(" \n Baby bird %d ate a worm!(%d total)", id_bird, wormsLeft);
 	wormsLeft = wormsLeft - 1;
 	i++;
 

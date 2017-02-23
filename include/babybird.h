@@ -3,9 +3,9 @@
 #include <stdio.h>
 extern volatile int wormsLeft;
 extern volatile int babyEnds;
-extern int num_babybirds;
-extern int num_eatworms;
-extern int num_getworms;
+extern int num_baby_birds;
+extern int num_eat_worms;
+extern int num_fetch_worms;
 void babyBird(int id_bird);
 void parentBird();
 extern volatile mutex_t babybird;

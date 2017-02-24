@@ -18,11 +18,11 @@ volatile mutex_t babybird1;
 
 shellcmd xsh_babybird(int32 argc, char *argv[]) {
 	int i;
-	mutex_create(&babybird);
-	mutex_create(&parentbird);
-	mutex_create(&babybird1);
-	cond_init(&babybird_cond);
-	cond_init(&parentbird_cond);
+	mutex_create(&babybird); //This is the mutex for the babybird
+	mutex_create(&parentbird); //This is the parent bird mutex
+	mutex_create(&babybird1); //This is the temporary babybird mutex 
+	cond_init(&babybird_cond); //This is the conditional mutex variable for the babybird
+	cond_init(&parentbird_cond); //This is the conditional mutex variable for the parentbird
 	//default values
 	num_baby_birds = 5;
 	num_fetch_worms = 2;
@@ -51,11 +51,11 @@ shellcmd xsh_babybird(int32 argc, char *argv[]) {
 
 	// exit(0);
 
-	resume(create(parentBird, 1024,20,"Parent bird",0));
+	resume(create(parentBird, 1024,20,"Parent bird",0)); //Creating the initial parent bird process 
 
 	for(i = 0; i< num_baby_birds ; i++)
 	{
-		resume(create(babyBird, 1024, 20, "Baby bird",1,i));
+		resume(create(babyBird, 1024, 20, "Baby bird",1,i)); //Creating the baby bird processes according to the number mentioned in the command line.
 
 	}
 	

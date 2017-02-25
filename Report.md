@@ -66,3 +66,12 @@ This protocol is not deadlock-free because there is a chance we will set busy eq
  - P1 sets `busy = true` and then restarts the outer loop because `turn != me`
  - P1 resumes busy-waiting because it just set `busy = true`
  - P2 continues to busy-wait, no progress can be made.
+
+ 
+----------Work Contributed.
+Bo Henderson worked on making the program more robust and drafted the questions in the report. All the exceptions handling were programmed by him including the files in the apps folder.
+Burde Prerana Kamath worked on the system files and the files in the include folder along with files in the shell folder and drafted the working of the program. 
+The working of the code was initially understood.
+The skeleton of the code was discussed and the work was split equally. 
+Debugging and testing were done together.
+The answers to the questions were discussed and drafted. 

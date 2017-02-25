@@ -1,4 +1,8 @@
 #include <babybird.h>
+#include <stdio.h>
+#include <string.h>
+
+
 void babyBird(int id_bird)
 {
   int i = 0;

@@ -1,6 +1,6 @@
 #ifndef _FUTURE_H_
 #define _FUTURE_H_  
-
+typedef qid16 queue;
 typedef enum {
 	  FUTURE_EMPTY,
 	    FUTURE_WAITING,

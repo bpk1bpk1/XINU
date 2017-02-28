@@ -15,6 +15,7 @@ const	struct	cmdent	cmdtab[] = {
 	{"producer-consumer",	TRUE,	xsh_producer_consumer},
 	{"pc",	                TRUE,	xsh_producer_consumer},
 	{"babybird",    FALSE, xsh_babybird},
+	{"future_prodcons",FALSE, xsh_prodcons},
 	{"bb",          FALSE, xsh_babybird},
 	{"argecho",	TRUE,	xsh_argecho},
 	{"cat",		FALSE,	xsh_cat},

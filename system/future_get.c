@@ -3,7 +3,7 @@
 
 syscall future_get (future_t * f, int *value)
 {
-  if (f->state == FUTURE_EMPTY || f->state == FUTURE_WAITING)
+  if (f->state == FUTURE_EMPTY || f->state == FUTURE_WAITING) //Checking for the pointer conditions
     {
       if (f->mode == FUTURE_EXCLUSIVE && !isempty (f->get_queue))
 	{

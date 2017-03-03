@@ -27,7 +27,7 @@ future_t* future_alloc(future_mode_t mode) {
   fut->value = NULL;
   fut->state = FUTURE_EMPTY;
   fut->mode = mode;
-  fut->pid =  getpid();
+  fut->pid =  NULL;
   fut->set_queue = NULL;
   fut->get_queue = NULL;
   return fut;
@@ -55,10 +55,10 @@ syscall future_get(future_t* fut, int* dst) {
       fut->state = FUTURE_WAITING;
       fut->pid = getpid();
       suspend(getpid());
+      fut->pid = NULL;
     }
     fut->state = FUTURE_EMPTY;
   }
-
   //////////////////////////////
   // Shared mode: 1 on many
   else if (fut->mode == FUTURE_SHARED) {
@@ -67,33 +67,33 @@ syscall future_get(future_t* fut, int* dst) {
       fut->state = FUTURE_WAITING;
       fut->get_queue = get_in_line(fut->get_queue);
       suspend(getpid());
-    }
+    } // note: state is not set to empty for this mode
   }
-
   //////////////////////////////
   // Queue mode: many on many
   else if (fut->mode == FUTURE_QUEUE) {
-
-    // if we're ready to get, then let one setter set
-    if (fut->state == FUTURE_READY) {
-      if (fut->set_queue != NULL) {
-	resume(fut->set_queue->pid);
-	temp = fut->set_queue;             // create a copy of our 1st node
-	fut->set_queue = fut->set_queue->next;  // move the 2nd in line to the front
-	freemem((char*) temp, sizeof(node));  // deallocate the 1st node
-      }
-
-    // if we're not ready to get, then get in line
-    } else {
+    // if we're not ready to get, then wait in line
+    if (fut->state != FUTURE_READY) {
       fut->state = FUTURE_WAITING;
       fut->get_queue = get_in_line(fut->get_queue);
       suspend(getpid());
+    } 
+    // if we're ready to get, then let one setter set
+    else {
+      if (fut->set_queue != NULL) {
+	// resume the first node of the set queue
+	temp = fut->set_queue;
+	fut->set_queue = fut->set_queue->next;
+	resume(temp->pid);
+	// free the node that was on the set_queue
+	freemem((char*) temp, sizeof(node));
+      }
     }
     fut->state = FUTURE_EMPTY;
 
   } else { restore(mask); return SYSERR; } // unrecognized mode
 
-  *dst = fut->value;
+  *dst = fut->value; // every single future_get ends by saving fut->value in dst
   restore(mask); return OK;
 }
 
@@ -106,21 +106,18 @@ syscall future_set(future_t* fut, int src) {
   // Exclusive mode: 1 on 1
   if (fut->mode == FUTURE_EXCLUSIVE) {
     fut->value = src;
-    // if a process is waiting, resume it
-    if (fut->state == FUTURE_WAITING) { resume(fut->pid); }
     fut->state = FUTURE_READY;
+    if (fut->pid != NULL) { resume(fut->pid); }
   }
-
   //////////////////////////////
   // Shared mode: 1 on many
   else if (fut->mode == FUTURE_SHARED) {
-
     // throw an error if another processes tries to set this future
-    if (fut->state == FUTURE_READY && fut->pid != getpid()) { return SYSERR; }
-
-    fut->value = src;
-
+    if (fut->state == FUTURE_READY && fut->pid != getpid()) { 
+      restore(mask); return SYSERR; 
+    }
     // everyone in the get_queue can go now
+    fut->value = src;
     if (fut->state == FUTURE_WAITING) {
       fut->state = FUTURE_READY;
       temp = fut->get_queue;
@@ -130,16 +127,15 @@ syscall future_set(future_t* fut, int src) {
       }
     }
   }
-
   //////////////////////////////
   // queue mode: many on many
   else if (fut->mode == FUTURE_QUEUE) {
-
-    // fill in an empty future
     if (fut->state != FUTURE_READY) {
+      // fill in an empty/waiting future
       fut->value = src;
       fut->state = FUTURE_READY;
       resume(fut->get_queue->pid);
+      // free the node that was on the get_queue
       temp = fut->get_queue;
       fut->get_queue = fut->get_queue->next;
       freemem((char*) temp, sizeof(node));
@@ -158,6 +154,7 @@ syscall future_set(future_t* fut, int src) {
 }
 
 
+// adds the current process's PID to the given queue
 node* get_in_line(node* queue) {
 
   // create a new node to put in the queue
@@ -175,11 +172,11 @@ node* get_in_line(node* queue) {
     while (curr->next != NULL) { curr = curr->next; }
     curr->next = new_node;
   }
-
   return queue;
+  
 }
 
-
+// frees the given node and every node it links to
 void free_queue(node* queue) {
 
   // if it's already cleared then there's nothing for us to do..

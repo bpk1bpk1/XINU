@@ -13,6 +13,11 @@ typedef enum {
   FUTURE_QUEUE
 } future_mode_t;
 
+typedef struct nodep {
+  pid32 pid;
+  struct nodep* next;
+} node;
+
 typedef struct {
   int value;
   future_state_t state;
@@ -21,11 +26,6 @@ typedef struct {
   node* set_queue;
   node* get_queue;
 } future_t;
-
-typedef struct {
-  pid32 pid;
-  next* node;
-} node;
 
 /* Interface for the Futures system calls */
 future_t* future_alloc(future_mode_t mode);

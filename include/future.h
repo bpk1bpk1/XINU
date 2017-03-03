@@ -18,9 +18,14 @@ typedef struct {
   future_state_t state;
   future_mode_t mode;
   pid32 pid;
-  // yourtype set_queue;
-  // yourtype get_queue;
+  node* set_queue;
+  node* get_queue;
 } future_t;
+
+typedef struct {
+  pid32 pid;
+  next* node;
+} node;
 
 /* Interface for the Futures system calls */
 future_t* future_alloc(future_mode_t mode);

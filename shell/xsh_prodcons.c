@@ -9,9 +9,9 @@
  */
 shellcmd xsh_prodcons(int nargs, char *args[]) {
 
-  if (nargs == 2 && strncmp(args[1], "-f", 2) == 0) {
+  // if (nargs == 2 && strncmp(args[1], "-f", 2) == 0) {
 
-    kprintf("futures activated\n");
+    chprio(getpid(), 19); // this isn't such an important process
 
     future_t* f_exclusive,
       * f_shared,
@@ -24,6 +24,8 @@ shellcmd xsh_prodcons(int nargs, char *args[]) {
     // Test FUTURE_EXCLUSIVE
     resume( create(future_cons, 1024, 20, "fcons1", 1, f_exclusive) );
     resume( create(future_prod, 1024, 20, "fprod1", 2, f_exclusive, 1) );
+
+    return;
 
     // Test FUTURE_SHARED
     resume( create(future_cons, 1024, 20, "fcons2", 1, f_shared) );
@@ -42,9 +44,12 @@ shellcmd xsh_prodcons(int nargs, char *args[]) {
     resume( create(future_prod, 1024, 20, "fprod5", 2, f_queue, 5) );
     resume( create(future_prod, 1024, 20, "fprod6", 2, f_queue, 6) );
 
-    return 0;
-  }
+    future_free(f_exclusive);
+    future_free(f_shared);
+    future_free(f_queue);
 
-  kprintf("prodcons activated\n");
+    return 0;
+  // }
+
   return 0;
 }

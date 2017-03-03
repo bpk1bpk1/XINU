@@ -3,9 +3,11 @@
 #include <xinu.h>
 #include <future.h>
 
+node* get_in_line(node* queue);
+void free_queue(node* queue);
 
 /*------------------------------------------------------------------------
- *  sleep  -  Delay the calling process n seconds
+ *  Futures stuff
  *------------------------------------------------------------------------
  */
 
@@ -31,38 +33,21 @@ future_t* future_alloc(future_mode_t mode) {
   return fut;
 }
 
+
+// free memory used by future and it's queues
 syscall future_free(future_t* fut) {
-
-  node *curr, *next;
-
-  // free the set_queue
-  if (fut->set_queue != NULL) {
-    curr = fut->set_queue;
-    next = curr->next;
-    do {
-      freemem(curr, sizeof(node));
-      curr = next;
-      next = curr->next;
-    } while (next != NULL);
-  }
-
-  // free the get_queue
-  if (fut->get_queue != NULL) {
-    curr = fut->get_queue;
-    next = curr->next;
-    do {
-      freemem(curr, sizeof(node));
-      curr = next;
-      next = curr->next;
-    } while (next != NULL);
-  }
-
-  return freemem((char*) fut, sizeof(future_t));
-
+  free_queue(fut->get_queue); // deallocate nodes on the get_queue
+  free_queue(fut->set_queue); // deallocate nodes on the set_queue
+  return freemem((char*) fut, sizeof(future_t)); // deallocate future
 }
+
 
 syscall future_get(future_t* fut, int* dst) {
 
+  intmask mask = disable();
+  node* temp;
+
+  //////////////////////////////
   // Exclusive mode: 1 on 1
   if (fut->mode == FUTURE_EXCLUSIVE) {
     // if not ready, wait until it is
@@ -71,51 +56,53 @@ syscall future_get(future_t* fut, int* dst) {
       fut->pid = getpid();
       suspend(getpid());
     }
+    fut->state = FUTURE_EMPTY;
   }
 
+  //////////////////////////////
   // Shared mode: 1 on many
   else if (fut->mode == FUTURE_SHARED) {
-    // if the future isn't ready, then it's waiting
+    // if the future isn't ready, then we need to be patient
     if (fut->state != FUTURE_READY) {
       fut->state = FUTURE_WAITING;
-      // create a node to add to our get_queue
-      node* get_node = (node*) getmem(sizeof(node));
-      get_node->pid = getpid();
-      get_node->next = NULL;
-      // if the queue is empty, then our node is the new get_queue
-      if (fut->get_queue == NULL) { fut->get_queue = get_node; }
-      // otherwise, follow the linked list to the end and add our node there
-      else {
-	node* curr = fut->get_queue;
-	while (curr->next != NULL) {
-	  curr = curr->next;
-	}
-	curr->next = get_node;
-      }
-      // wait to be called before continuing
+      fut->get_queue = get_in_line(fut->get_queue);
       suspend(getpid());
     }
   }
 
+  //////////////////////////////
   // Queue mode: many on many
   else if (fut->mode == FUTURE_QUEUE) {
 
+    // if we're ready to get, then let one setter set
+    if (fut->state == FUTURE_READY) {
+      if (fut->set_queue != NULL) {
+	resume(fut->set_queue->pid);
+	temp = fut->set_queue;             // create a copy of our 1st node
+	fut->set_queue = fut->set_queue->next;  // move the 2nd in line to the front
+	freemem((char*) temp, sizeof(node));  // deallocate the 1st node
+      }
 
-    // queue something
+    // if we're not ready to get, then get in line
+    } else {
+      fut->state = FUTURE_WAITING;
+      fut->get_queue = get_in_line(fut->get_queue);
+      suspend(getpid());
+    }
+    fut->state = FUTURE_EMPTY;
 
+  } else { restore(mask); return SYSERR; } // unrecognized mode
 
-  } else {
-    return SYSERR;
-  }
-
-  // future is ready, let's empty it!
   *dst = fut->value;
-  fut->state = FUTURE_EMPTY;
-  return OK;
+  restore(mask); return OK;
 }
 
 syscall future_set(future_t* fut, int src) {
 
+  intmask mask = disable();
+  node* temp;
+
+  //////////////////////////////
   // Exclusive mode: 1 on 1
   if (fut->mode == FUTURE_EXCLUSIVE) {
     fut->value = src;
@@ -124,6 +111,7 @@ syscall future_set(future_t* fut, int src) {
     fut->state = FUTURE_READY;
   }
 
+  //////////////////////////////
   // Shared mode: 1 on many
   else if (fut->mode == FUTURE_SHARED) {
 
@@ -132,28 +120,79 @@ syscall future_set(future_t* fut, int src) {
 
     fut->value = src;
 
-    // 
+    // everyone in the get_queue can go now
     if (fut->state == FUTURE_WAITING) {
-      node* curr = fut->get_queue;
-      while (curr != NULL) {
-	resume(curr->pid);
-	curr = curr->next;
+      fut->state = FUTURE_READY;
+      temp = fut->get_queue;
+      while (temp != NULL) {
+	resume(temp->pid);
+	temp = temp->next;
       }
     }
-
-    fut->state = FUTURE_READY;
   }
 
+  //////////////////////////////
   // queue mode: many on many
   else if (fut->mode == FUTURE_QUEUE) {
 
+    // fill in an empty future
+    if (fut->state != FUTURE_READY) {
+      fut->value = src;
+      fut->state = FUTURE_READY;
+      resume(fut->get_queue->pid);
+      temp = fut->get_queue;
+      fut->get_queue = fut->get_queue->next;
+      freemem((char*) temp, sizeof(node));
+    }
+    // wait if this future is already ready
+    else {
+      fut->set_queue = get_in_line(fut->set_queue);
+      suspend(getpid());
+      fut->value = src;
+      fut->state = FUTURE_READY;
+    }
 
-    // queue something
+  } else { restore(mask); return SYSERR; } // unrecognized mode
 
-
-  } else {
-    return SYSERR;
-  }
-  return OK;
+  restore(mask); return OK;
 }
 
+
+node* get_in_line(node* queue) {
+
+  // create a new node to put in the queue
+  node* new_node = (node*) getmem(sizeof(node));
+  new_node->pid = getpid();
+  new_node->next = NULL;
+
+  // if the queue is empty, then our node is the new get_queue
+  if (queue == NULL) { return new_node; }
+
+  // otherwise, follow the linked list to the end and add our node there
+  else {
+    node* curr = queue;
+    // go to the end of the line
+    while (curr->next != NULL) { curr = curr->next; }
+    curr->next = new_node;
+  }
+
+  return queue;
+}
+
+
+void free_queue(node* queue) {
+
+  // if it's already cleared then there's nothing for us to do..
+  if (queue == NULL) { return; }
+
+  // save the next node and deallocate the current one
+  node* next = queue->next;
+  freemem((char*) queue, sizeof(node));
+
+  // check, shift, delete, repeat
+  while (next != NULL) {
+    queue = next;
+    next = queue->next;
+    freemem((char*) queue, sizeof(node));
+  }
+}

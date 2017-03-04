@@ -1,26 +1,21 @@
-#include <xinu.h>
-#include <future.h>
-  future_t * future_alloc (future_mode_t mode)
-{
+#include <prodcons.h>
+#include <stdlib.h>
+/*
+*Description
+*Allocates a new future (in the FUTURE_EMPTY state) in given mode. We will use memget() call to allocate space to new future.
+*Parameters
+*int future_flag: flag to be set for this future
+*Return
+*future: NULL or a valid future reference
+*/
 
-  future_t *future_obj = (future_t *) getmem (sizeof (future_t));
-  if (future_obj == (future_t *) SYSERR)
-    return NULL;
-  future_obj->mode = mode;
-  future_obj->state = FUTURE_EMPTY;
-  future_obj->pid = 0;
-  future_obj->set_queue = newqueue ();
-  if (future_obj->set_queue == SYSERR)
-    {
-      printf ("Queue Full");
-      exit (1);
-    }
-  future_obj->get_queue = newqueue ();
-  if (future_obj->get_queue == SYSERR)
-    {
-      printf ("Queue Full");
-      exit (1);
-    }
-
-  return future_obj;
+future* future_alloc(int future_flag){
+  intmask mask;
+  mask = disable();
+  future *fut = getmem(sizeof(future));
+  fut->flag = future_flag;
+  fut->state = FUTURE_EMPTY;
+  fut->pid = NULL;
+  restore(mask);
+  return fut;
 }
